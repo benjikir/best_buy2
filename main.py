@@ -1,5 +1,6 @@
 import store
 import products
+from products import SecondHalfPrice, ThirdOneFree, PercentDiscount
 
 
 def start(store_obj):
@@ -25,6 +26,11 @@ def start(store_obj):
             shopping_list = []
             all_products = store_obj.get_all_products()
 
+            # Create promotion catalog
+            second_half_price = SecondHalfPrice("Second Half price!")
+            third_one_free = ThirdOneFree("Third One Free!")
+            thirty_percent = PercentDiscount("30% off!", percent=0.3)
+
             while True:
                 print("\nAvailable Products:")
                 for idx, product in enumerate(all_products, start=1):
@@ -46,6 +52,24 @@ def start(store_obj):
                 if not product:
                     print("Invalid product selection. Please try again.")
                     continue
+
+                print("Select a promotion:")
+                print("1. Second Half Price")
+                print("2. Third One Free")
+                print("3. 30% Off")
+                print("4. No Promotion")
+                promo_choice = input("Enter promotion number: ")
+
+                if promo_choice == "1":
+                    product.set_promotion(second_half_price)
+                elif promo_choice == "2":
+                    product.set_promotion(third_one_free)
+                elif promo_choice == "3":
+                    product.set_promotion(thirty_percent)
+                elif promo_choice == "4":
+                    product.set_promotion(None)
+                else:
+                    print("Invalid promotion choice. No promotion applied.")
 
                 try:
                     quantity = int(input("Enter quantity: "))

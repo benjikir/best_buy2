@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class Promotion(ABC):
     def __init__(self, name: str):
         self.name = name
@@ -12,29 +13,39 @@ class Promotion(ABC):
 class PercentDiscount(Promotion):
     def __init__(self, name: str, percent: float):
         super().__init__(name)
-        self.percent = percent / 100
+        if percent <= 0 or percent >= 1:
+            raise ValueError("Der Rabatt muss zwischen 0 und 1 liegen.")
+        self.percent = percent
 
-    def apply_promotion(self, product, quantity) -> float:
-        return (product.price * quantity) * (1 - self.percent)
+    def apply_promotion(self, product, quantity):
+        """Berechnet den Preis nach Anwendung eines Prozentsatz-Rabatts."""
+        return product.price * quantity * (1 - self.percent)
 
 
-class SecondHalfPrice(Promotion):
+class SecondHalfPrice:
     def __init__(self, name: str):
-        super().__init__(name)
+        self.name = name
 
-    def apply_promotion(self, product, quantity) -> float:
-        full_price_items = quantity // 2 + quantity % 2
-        half_price_items = quantity // 2
-        return full_price_items * product.price + half_price_items * (product.price / 2)
+    def apply_promotion(self, product, quantity: int) -> float:
+        total_price = 0.0
+        for i in range(1, quantity + 1):
+            if i % 2 == 0:  # Jedes zweite Produkt bekommt den halben Preis
+                total_price += product.price / 2
+            else:
+                total_price += product.price
+        return total_price
 
 
 class ThirdOneFree(Promotion):
     def __init__(self, name: str):
         super().__init__(name)
 
-    def apply_promotion(self, product, quantity) -> float:
-        full_price_items = quantity - (quantity // 3)
-        return full_price_items * product.price
+    def apply_promotion(self, product, quantity):
+        """Berechnet den Preis nach Anwendung des 'Third One Free' Angebots."""
+        if quantity < 3:
+            raise ValueError("Die Promotion erfordert den Kauf von mindestens 3 Produkten.")
+        # Preis für zwei Produkte zahlen, das dritte ist kostenlos
+        return product.price * (quantity - quantity // 3)
 
 
 class Product:
@@ -63,7 +74,7 @@ class Product:
             self.deactivate()
 
     def is_active(self) -> bool:
-        return self.active
+        return self.quantity > 0
 
     def activate(self):
         self.active = True
@@ -79,16 +90,13 @@ class Product:
         return f"{self.name}, Price: {self.price}, Quantity: {self.quantity}{promotion_info}"
 
     def buy(self, quantity: int) -> float:
-        if quantity <= 0:
-            raise ValueError("Purchase quantity must be greater than zero.")
         if quantity > self.quantity:
-            raise ValueError("Not enough stock available.")
-
-        self.set_quantity(self.quantity - quantity)
+            raise ValueError("Nicht genügend Vorrat")
+        self.quantity -= quantity
         if self.promotion:
-            return self.promotion.apply_promotion(self, quantity)
-        return quantity * self.price
-
+            return self.promotion.apply_promotion(self, quantity)  # Promotion anwenden
+        else:
+            return self.price * quantity
 
 class NonStockedProduct(Product):
     def __init__(self, name: str, price: float):
@@ -119,7 +127,7 @@ product_list = [
 # Create promotion catalog
 second_half_price = SecondHalfPrice("Second Half price!")
 third_one_free = ThirdOneFree("Third One Free!")
-thirty_percent = PercentDiscount("30% off!", percent=30)
+thirty_percent = PercentDiscount("30% off!", percent=0.30)  # Korrektur: 30% Rabatt als 0.30 anstelle von 30
 
 # Add promotions to products
 product_list[0].set_promotion(second_half_price)
